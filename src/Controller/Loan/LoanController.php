@@ -5,14 +5,12 @@ require_once '../../../config/database.php';
 ini_set('display_errors', 1);
 error_reporting(E_ALL);
 
-
-
 /**
- * retourne un json de tous les équipements de la bdd
+ * Retourne un JSON de tous les prêts de la BDD
  */
-function getEquipments($filter = '', $order = 'ASC') {
+function getLoans($filter = '', $order = 'ASC') {
     $conn = connectDb();
-    $sql = "SELECT * FROM equipment";
+    $sql = "SELECT * FROM to_loan";
 
     // Appliquer un filtre si présent
     if (!empty($filter)) {
@@ -21,38 +19,37 @@ function getEquipments($filter = '', $order = 'ASC') {
 
     // Appliquer l'ordre si présent
     if (!empty($order)) {
-        $sql .= " ORDER BY name $order";
+        $sql .= " ORDER BY start_date $order";
     } else {
-        $sql .= " ORDER BY name $order";
+        $sql .= " ORDER BY start_date $order";
     }
 
     $result = $conn->query($sql);
-    $equipments = [];
+    $loans = [];
 
     if ($result && $result->num_rows > 0) {
         while ($row = $result->fetch_assoc()) {
-            $equipments[] = $row;
+            $loans[] = $row;
         }
         $result->free();
     }
 
     $conn->close();
-    return $equipments;
+    return $loans;
 }
 
-
-// Traiter la requête POST
+// Traiter la requête GET
 if ($_SERVER['REQUEST_METHOD'] == 'GET') {
 
-    $action = $_POST['action'] ?? '';
-    $id = $_POST['id'] ?? '';
-    $filter = $_POST['filter'] ?? '';
-    $order = $_POST['order'] ?? '';
+    $action = $_GET['action'] ?? '';
+    $id = $_GET['id'] ?? '';
+    $filter = $_GET['filter'] ?? '';
+    $order = $_GET['order'] ?? '';
 
-    if ($action == 'POST' && empty($id) && empty($filter)) {
+    if ($action == 'GET' && empty($id) && empty($filter)) {
         echo json_encode(['error' => 'No valid parameters provided for the query.']);
     } else {
-        $result = getEquipments($filter, $order);
+        $result = getLoans($filter, $order);
         echo json_encode($result);
     }
 }
