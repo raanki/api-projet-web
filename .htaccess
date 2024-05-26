@@ -1,0 +1,4 @@
+RewriteEngine On
+
+RewriteRule ^api/equipment$ src/Controller/Equipment/EquipmentController.php [NC,L]
+RewriteRule ^cors$ config/cors.php [NC,L]
