@@ -38,18 +38,129 @@ function getLoans($filter = '', $order = 'ASC') {
     return $loans;
 }
 
-// Traiter la requête GET
+function getLoanById($id) {
+    $conn = connectDb();
+    $sql = "SELECT * FROM to_loan WHERE loan_id = ?";
+    $stmt = $conn->prepare($sql);
+    $stmt->bind_param("i", $id);
+    $stmt->execute();
+    $result = $stmt->get_result();
+
+    if ($result->num_rows == 1) {
+        $loan = $result->fetch_assoc();
+        $stmt->close();
+        $conn->close();
+        return $loan;
+    } else {
+        $stmt->close();
+        $conn->close();
+        return null;
+    }
+}
+
+function updateLoanById($id, $mail, $start_date, $expect_end_date, $actual_end_date, $commentary, $material_id) {
+    $conn = connectDb();
+
+    $sql = "UPDATE to_loan SET
+            mail = ?,
+            start_date = ?,
+            expect_end_date = ?,
+            actual_end_date = ?,
+            commentary = ?,
+            material_id = ?
+        WHERE loan_id = ?";
+
+    // Préparation de la requête
+    $stmt = $conn->prepare($sql);
+    $stmt->bind_param("ssssssi", $mail, $start_date, $expect_end_date, $actual_end_date, $commentary, $material_id, $id);
+
+    $success = $stmt->execute();
+
+    $stmt->close();
+    $conn->close();
+
+    return $success;
+}
+
+function createLoan($mail, $start_date, $expect_end_date, $actual_end_date, $commentary, $material_id) {
+    $conn = connectDb();
+    $createdAt = date("Y-m-d H:i:s");
+
+    $sql = "INSERT INTO to_loan (mail, start_date, expect_end_date, actual_end_date, commentary, material_id, created_at)
+            VALUES (?, ?, ?, ?, ?, ?, ?)";
+
+    // Préparation de la requête
+    $stmt = $conn->prepare($sql);
+    $stmt->bind_param("sssssis", $mail, $start_date, $expect_end_date, $actual_end_date, $commentary, $material_id, $createdAt);
+    $success = $stmt->execute();
+
+    $stmt->close();
+    $conn->close();
+
+    return $success;
+}
+
+function deleteLoan($loan_id) {
+    $conn = connectDb();
+    $sql = "DELETE FROM to_loan WHERE loan_id = ?";
+    $stmt = $conn->prepare($sql);
+    $stmt->bind_param("i", $loan_id);
+    $success = $stmt->execute();
+    $stmt->close();
+    $conn->close();
+
+    return $success;
+}
+
+// Traiter les requêtes GET et POST
 if ($_SERVER['REQUEST_METHOD'] == 'GET') {
 
     $action = $_GET['action'] ?? '';
     $id = $_GET['id'] ?? '';
     $filter = $_GET['filter'] ?? '';
     $order = $_GET['order'] ?? '';
-
-    if ($action == 'GET' && empty($id) && empty($filter)) {
-        echo json_encode(['error' => 'No valid parameters provided for the query.']);
-    } else {
+var_dump($action);
+    if ($action === 'list') {
         $result = getLoans($filter, $order);
         echo json_encode($result);
+    } elseif ($action === 'view' && !empty($id)) {
+        $loan = getLoanById($id);
+        if ($loan) {
+            echo json_encode($loan);
+        } else {
+            echo json_encode(['error' => 'Loan not found.']);
+        }
+    } else {
+        echo json_encode(['error' => 'Invalid action or parameters.']);
+    }
+
+} elseif ($_SERVER['REQUEST_METHOD'] == 'POST') {
+    // Traiter les requêtes POST pour créer ou mettre à jour un prêt
+    $action = $_POST['action'] ?? '';
+
+    if ($action === 'create') {
+        $mail = $_POST['mail'];
+        $start_date = $_POST['start_date'];
+        $expect_end_date = $_POST['expect_end_date'];
+        $actual_end_date = $_POST['actual_end_date'];
+        $commentary = $_POST['commentary'];
+        $material_id = $_POST['material_id'];
+
+        $success = createLoan($mail, $start_date, $expect_end_date, $actual_end_date, $commentary, $material_id);
+        echo json_encode(['success' => $success]);
+
+    } elseif ($action === 'update' && !empty($_POST['id'])) {
+        $id = $_POST['id'];
+        $mail = $_POST['mail'];
+        $start_date = $_POST['start_date'];
+        $expect_end_date = $_POST['expect_end_date'];
+        $actual_end_date = $_POST['actual_end_date'];
+        $commentary = $_POST['commentary'];
+        $material_id = $_POST['material_id'];
+
+        $success = updateLoanById($id, $mail, $start_date, $expect_end_date, $actual_end_date, $commentary, $material_id);
+        echo json_encode(['success' => $success]);
+    } else {
+        echo json_encode(['error' => 'Invalid action or parameters.']);
     }
 }
