@@ -1,4 +1,5 @@
 <?php
+
 require_once '../../../config/cors.php';
 require_once '../../../config/database.php';
 
@@ -40,6 +41,29 @@ function getEquipments($filter = '', $order = 'ASC') {
     return $equipments;
 }
 
+/**
+ * Crée un nouvel équipement dans la base de données
+ */
+function createEquipment($data) {
+    $conn = connectDb();
+    $sql = "INSERT INTO equipment (name, description, purchase_date, purchase_price, supplier, availability) VALUES (?, ?, ?, ?, ?, ?)";
+
+    $stmt = $conn->prepare($sql);
+    $stmt->bind_param("ssssds", $data['name'], $data['description'], $data['purchaseDate'], $data['purchasePrice'], $data['supplier'], $data['availability']);
+
+    if ($stmt->execute()) {
+        $last_id = $stmt->insert_id;
+        $stmt->close();
+        $conn->close();
+        return '';
+    } else {
+        $stmt->close();
+        $conn->close();
+        return ['error' => 'Unable to create equipment.'];
+    }
+}
+
+
 
 // Traiter la requête POST
 if ($_SERVER['REQUEST_METHOD'] == 'GET') {
@@ -55,4 +79,17 @@ if ($_SERVER['REQUEST_METHOD'] == 'GET') {
         $result = getEquipments($filter, $order);
         echo json_encode($result);
     }
+}
+
+// Traiter la requête POST
+if ($_SERVER['REQUEST_METHOD'] == 'POST') {
+    $input = file_get_contents('php://input');
+    $data = json_decode($input, true);
+    $action = $data['action'] ?? '';
+
+    if ($action == 'create') {
+        $newEquipment = createEquipment($data);
+        echo json_encode($newEquipment);
+    }
+
 }
