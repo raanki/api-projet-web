@@ -112,11 +112,11 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
     $data = json_decode($input, true);
     $action = $data['action'] ?? '';
 
-    if ($action == 'create') {
+    if ($action == "fetch") {
+        echo json_encode(getLoanById($data['id']));
+    } elseif ($action == 'create') {
         $newLoan = createLoan($data);
         echo json_encode($newLoan);
-    } else {
-        echo json_encode(['error' => 'Invalid action specified.']);
     }
 }
 
