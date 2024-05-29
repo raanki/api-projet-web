@@ -164,3 +164,4 @@ var_dump($action);
         echo json_encode(['error' => 'Invalid action or parameters.']);
     }
 }
+
