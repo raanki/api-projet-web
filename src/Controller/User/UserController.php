@@ -16,7 +16,7 @@ function getUsersByRole($role) {
     if ($role === 'admin') {
         $sql .= " WHERE student_number IS NULL";
     } elseif ($role === 'student') {
-        $sql .= " WHERE student_number IS NOT NULL";
+        $sql .= " WHERE student_number IS NOT NULL AND WHERE password is NULL";
     } else {
         // Si le rôle n'est ni 'admin' ni 'student', retourner une erreur
         return ['error' => 'Invalid role provided'];
