@@ -13,12 +13,10 @@ function getLoans($filter = '', $order = 'ASC') {
     $conn = connectDb();
     $sql = "SELECT * FROM to_loan";
 
-    // Appliquer un filtre si présent
     if (!empty($filter)) {
         $sql .= " WHERE " . $filter;
     }
 
-    // Appliquer l'ordre si présent
     if (!empty($order)) {
         $sql .= " ORDER BY loan_id $order";
     } else {
@@ -61,6 +59,27 @@ function createLoan($data) {
 }
 
 /**
+ * Met à jour un prêt existant
+ */
+function updateLoan($data) {
+    $conn = connectDb();
+    $sql = "UPDATE to_loan SET mail = ?, start_date = ?, expect_end_date = ?, actual_end_date = ?, commentary = ?, material_id = ? WHERE loan_id = ?";
+
+    $stmt = $conn->prepare($sql);
+    $stmt->bind_param("ssssssi", $data['mail'], $data['start_date'], $data['expect_end_date'], $data['actual_end_date'], $data['commentary'], $data['material_id'], $data['loan_id']);
+
+    if ($stmt->execute()) {
+        $stmt->close();
+        $conn->close();
+        return '';
+    } else {
+        $stmt->close();
+        $conn->close();
+        return ['error' => 'Unable to update loan.'];
+    }
+}
+
+/**
  * Récupère un prêt par ID
  */
 function getLoanById($id) {
@@ -90,8 +109,10 @@ function deleteLoan($id) {
     return $success;
 }
 
-// Traiter la requête GET
-if ($_SERVER['REQUEST_METHOD'] == 'GET') {
+// Traiter les requêtes
+$method = $_SERVER['REQUEST_METHOD'];
+
+if ($method == 'GET') {
     $action = $_GET['action'] ?? '';
     $id = $_GET['id'] ?? '';
     $filter = $_GET['filter'] ?? '';
@@ -104,24 +125,21 @@ if ($_SERVER['REQUEST_METHOD'] == 'GET') {
         $result = getLoans($filter, $order);
         echo json_encode($result);
     }
-}
-
-// Traiter la requête POST pour créer un nouveau prêt
-if ($_SERVER['REQUEST_METHOD'] == 'POST') {
+} elseif ($method == 'POST') {
     $input = file_get_contents('php://input');
     $data = json_decode($input, true);
     $action = $data['action'] ?? '';
 
-    if ($action == 'create') {
+    if ($action == "fetch") {
+        echo json_encode(getLoanById($data['id']));
+    } elseif ($action == 'create') {
         $newLoan = createLoan($data);
         echo json_encode($newLoan);
-    } else {
-        echo json_encode(['error' => 'Invalid action specified.']);
+    } elseif ($action == 'update') {
+        $updatedLoan = updateLoan($data);
+        echo json_encode($updatedLoan);
     }
-}
-
-// Traiter la requête DELETE pour supprimer un prêt
-if ($_SERVER['REQUEST_METHOD'] == 'DELETE') {
+} elseif ($method == 'DELETE') {
     $input = file_get_contents('php://input');
     $data = json_decode($input, true);
     $id = $data['id'] ?? null;
