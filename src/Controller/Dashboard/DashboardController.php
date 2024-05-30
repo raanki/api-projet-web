@@ -8,7 +8,8 @@ function getDashboardData() {
     $data = [];
 
     // Nombre d'étudiants (utilisateurs avec un numéro d'étudiant)
-    $sql = "SELECT COUNT(*) AS count FROM users WHERE student_number IS NOT NULL";
+    $sql = "SELECT COUNT(*) AS count FROM users WHERE student_number IS NOT NULL AND (password IS NULL OR password = '')";
+
     $result = $conn->query($sql);
     $row = $result->fetch_assoc();
     $data['numberOfStudents'] = $row['count'];
@@ -20,7 +21,7 @@ function getDashboardData() {
     $data['lateLoans'] = $row['count'];
 
     // Derniers prêts d'équipement
-    $sql = "SELECT * FROM to_loan ORDER BY start_date DESC LIMIT 5";
+    $sql = "SELECT * FROM to_loan ORDER BY start_date DESC LIMIT 4";
     $result = $conn->query($sql);
     $data['latestEquipmentLoans'] = [];
     while ($row = $result->fetch_assoc()) {
@@ -33,6 +34,12 @@ function getDashboardData() {
     $row = $result->fetch_assoc();
     $data['totalEquipment'] = $row['count'];
 
+    // Nombre total Loans
+    $sql = "SELECT COUNT(*) AS count FROM to_loan";
+    $result = $conn->query($sql);
+    $row = $result->fetch_assoc();
+    $data['totalLoan'] = $row['count'];
+
     // Prêts de la semaine (prêts créés au cours de la semaine en cours)
     $sql = "SELECT * FROM to_loan WHERE start_date >= DATE_SUB(CURDATE(), INTERVAL 1 WEEK)";
     $result = $conn->query($sql);
@@ -42,7 +49,8 @@ function getDashboardData() {
     }
 
 // Prêts d'équipement les plus populaires (par exemple, les équipements les plus empruntés)
-    $sql = "SELECT * FROM to_loan GROUP BY material_id ORDER BY COUNT(*) DESC LIMIT 5";
+    $sql = "SELECT material_id, COUNT(*) AS loan_count FROM to_loan GROUP BY material_id ORDER BY loan_count DESC LIMIT 5";
+
     $result = $conn->query($sql);
     $data['popularEquipmentLoans'] = [];
     while ($row = $result->fetch_assoc()) {
