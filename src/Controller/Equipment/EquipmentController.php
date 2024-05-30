@@ -6,21 +6,17 @@ require_once '../../../config/database.php';
 ini_set('display_errors', 1);
 error_reporting(E_ALL);
 
-
-
 /**
- * retourne un json de tous les équipements de la bdd
+ * Retourne un JSON de tous les équipements de la bdd
  */
 function getEquipments($filter = '', $order = 'ASC') {
     $conn = connectDb();
     $sql = "SELECT * FROM equipment";
 
-    // Appliquer un filtre si présent
     if (!empty($filter)) {
         $sql .= " WHERE " . $filter;
     }
 
-    // Appliquer l'ordre si présent
     if (!empty($order)) {
         $sql .= " ORDER BY name $order";
     } else {
@@ -49,7 +45,11 @@ function createEquipment($data) {
     $sql = "INSERT INTO equipment (name, description, purchase_date, purchase_price, supplier, availability) VALUES (?, ?, ?, ?, ?, ?)";
 
     $stmt = $conn->prepare($sql);
-    $stmt->bind_param("ssssds", $data['name'], $data['description'], $data['purchaseDate'], $data['purchasePrice'], $data['supplier'], $data['availability']);
+
+    // Vérifier si 'availability' est définie, sinon la définir à 'false'
+    $availability = isset($data['availability']) ? $data['availability'] : false;
+
+    $stmt->bind_param("sssdss", $data['name'], $data['description'], $data['purchaseDate'], $data['purchasePrice'], $data['supplier'], $availability);
 
     if ($stmt->execute()) {
         $last_id = $stmt->insert_id;
@@ -60,6 +60,31 @@ function createEquipment($data) {
         $stmt->close();
         $conn->close();
         return ['error' => 'Unable to create equipment.'];
+    }
+}
+
+/**
+ * Met à jour un équipement existant
+ */
+function updateEquipment($data) {
+    $conn = connectDb();
+    $sql = "UPDATE equipment SET name = ?, description = ?, purchase_date = ?, purchase_price = ?, supplier = ?, availability = ? WHERE material_id = ?";
+
+    $stmt = $conn->prepare($sql);
+
+    // Vérifier si 'availability' est définie, sinon la définir à 'false'
+    $availability = isset($data['availability']) ? $data['availability'] : false;
+
+    $stmt->bind_param("ssdsssi", $data['name'], $data['description'], $data['purchaseDate'], $data['purchasePrice'], $data['supplier'], $availability, $data['material_id']);
+
+    if ($stmt->execute()) {
+        $stmt->close();
+        $conn->close();
+        return '';
+    } else {
+        $stmt->close();
+        $conn->close();
+        return ['error' => 'Unable to update equipment.'];
     }
 }
 
@@ -93,47 +118,37 @@ function deleteEquipment($id) {
     return $success;
 }
 
+// Traiter les requêtes
+$method = $_SERVER['REQUEST_METHOD'];
 
-// Traiter la requête POST
-if ($_SERVER['REQUEST_METHOD'] == 'GET') {
+if ($method == 'GET') {
+    $action = $_GET['action'] ?? '';
+    $id = $_GET['id'] ?? '';
+    $filter = $_GET['filter'] ?? '';
+    $order = $_GET['order'] ?? '';
 
-    $action = $_POST['action'] ?? '';
-    $id = $_POST['id'] ?? '';
-    $filter = $_POST['filter'] ?? '';
-    $order = $_POST['order'] ?? '';
-
-    if ($action == 'POST' && empty($id) && empty($filter)) {
-        echo json_encode(['error' => 'No valid parameters provided for the query.']);
+    if ($action == 'fetch' && !empty($id)) {
+        $equipment = getEquipmentById($id);
+        echo json_encode($equipment);
     } else {
         $result = getEquipments($filter, $order);
         echo json_encode($result);
     }
-}
-
-// Traiter la requête POST pour récupérer un équipement par ID ou créer un nouvel équipement
-if ($_SERVER['REQUEST_METHOD'] == 'POST') {
+} elseif ($method == 'POST') {
     $input = file_get_contents('php://input');
     $data = json_decode($input, true);
     $action = $data['action'] ?? '';
 
     if ($action == 'fetch') {
-        $id = $data['id'] ?? null;
-        if ($id) {
-            $equipment = getEquipmentById($id);
-            echo json_encode($equipment);
-        } else {
-            echo json_encode(['error' => 'No ID provided']);
-        }
+        echo json_encode(getEquipmentById($data['id']));
     } elseif ($action == 'create') {
         $newEquipment = createEquipment($data);
         echo json_encode($newEquipment);
-    } else {
-        echo json_encode(['error' => 'Invalid action specified.']);
+    } elseif ($action == 'update') {
+        $updatedEquipment = updateEquipment($data);
+        echo json_encode($updatedEquipment);
     }
-}
-
-// Traiter la requête DELETE pour supprimer un équipement
-if ($_SERVER['REQUEST_METHOD'] == 'DELETE') {
+} elseif ($method == 'DELETE') {
     $input = file_get_contents('php://input');
     $data = json_decode($input, true);
     $id = $data['id'] ?? null;
@@ -149,3 +164,4 @@ if ($_SERVER['REQUEST_METHOD'] == 'DELETE') {
         echo json_encode(['error' => 'No ID provided']);
     }
 }
+?>
