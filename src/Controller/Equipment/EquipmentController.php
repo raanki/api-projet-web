@@ -53,6 +53,7 @@ function createEquipment($data) {
 
     // Vérifier si 'availability' est définie, sinon la définir à 'false'
     $availability = isset($data['availability']) ? $data['availability'] : false;
+    $availability = $availability ? 1 : 0;
 
     $stmt->bind_param("sssdss", $data['name'], $data['description'], $data['purchaseDate'], $data['purchasePrice'], $data['supplier'], $availability);
 
