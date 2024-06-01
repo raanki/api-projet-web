@@ -28,6 +28,8 @@ function getLoans($filter = '', $order = 'ASC') {
 
     if ($result && $result->num_rows > 0) {
         while ($row = $result->fetch_assoc()) {
+            $row["commentary"] = ucfirst($row["commentary"]);
+            $row["material_id"] = $row["material_id"] == "1" ? "Yes" : "No";
             $loans[] = $row;
         }
         $result->free();

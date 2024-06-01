@@ -14,9 +14,9 @@ function getUsersByRole($role) {
 
     // Appliquer un filtre en fonction du rôle
     if ($role === 'admin') {
-        $sql .= " WHERE student_number IS NULL";
+        $sql .= " WHERE password IS NOT NULL";
     } elseif ($role === 'student') {
-        $sql .= " WHERE student_number IS NOT NULL AND WHERE password is NULL";
+        $sql .= " WHERE student_number IS NOT NULL AND password is NULL";
     } else {
         // Si le rôle n'est ni 'admin' ni 'student', retourner une erreur
         return ['error' => 'Invalid role provided'];
@@ -27,6 +27,9 @@ function getUsersByRole($role) {
 
     if ($result && $result->num_rows > 0) {
         while ($row = $result->fetch_assoc()) {
+            $row["firstname"] = ucfirst($row["firstname"]);
+            $row["lastname"] = ucfirst($row["lastname"]);
+            $row["job"] = ucfirst($row["job"]);
             $users[] = $row;
         }
         $result->free();
@@ -45,3 +48,4 @@ if ($_SERVER['REQUEST_METHOD'] === 'GET') {
     $result = getUsersByRole($role);
     echo json_encode($result);
 }
+
