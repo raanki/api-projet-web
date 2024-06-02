@@ -21,7 +21,12 @@ function getDashboardData() {
     $data['lateLoans'] = $row['count'];
 
     // Derniers prêts d'équipement
-    $sql = "SELECT * FROM to_loan ORDER BY start_date DESC LIMIT 4";
+    $sql = "SELECT to_loan.*, equipment.name AS equipment_name, users.firstname AS student_name 
+            FROM to_loan 
+            JOIN equipment ON to_loan.material_id = equipment.material_id 
+            JOIN users ON to_loan.mail = users.mail 
+            ORDER BY start_date DESC 
+            LIMIT 4";
     $result = $conn->query($sql);
     $data['latestEquipmentLoans'] = [];
     while ($row = $result->fetch_assoc()) {
@@ -48,18 +53,21 @@ function getDashboardData() {
         $data['weekLoans'][] = $row;
     }
 
-// Prêts d'équipement les plus populaires (par exemple, les équipements les plus empruntés)
-    $sql = "SELECT material_id, COUNT(*) AS loan_count FROM to_loan GROUP BY material_id ORDER BY loan_count DESC LIMIT 5";
-
+    // Prêts d'équipement les plus populaires (par exemple, les équipements les plus empruntés)
+    $sql = "SELECT to_loan.material_id, equipment.name AS equipment_name, COUNT(*) AS loan_count 
+        FROM to_loan 
+        JOIN equipment ON to_loan.material_id = equipment.material_id 
+        GROUP BY to_loan.material_id 
+        ORDER BY loan_count DESC 
+        LIMIT 5";
     $result = $conn->query($sql);
     $data['popularEquipmentLoans'] = [];
     while ($row = $result->fetch_assoc()) {
         $data['popularEquipmentLoans'][] = $row;
     }
 
-// Retourner les données du tableau de bord au format JSON
+    // Retourner les données du tableau de bord au format JSON
     echo json_encode($data);
-
 }
 
 // Traiter la requête GET
