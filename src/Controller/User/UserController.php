@@ -48,7 +48,8 @@ function createUser($data) {
 
     $stmt = $conn->prepare($sql);
 
-    $stmt->bind_param("sisssssss", $data['mail'], $data['student_number'], $data['firstname'], $data['lastname'], $data['address'], $data['password'], $data['phone'], $data['job'], $data['birth_date']);
+    $password_hash = password_hash($data['password'], PASSWORD_DEFAULT, []);
+    $stmt->bind_param("sisssssss", $data['mail'], $data['student_number'], $data['firstname'], $data['lastname'], $data['address'], $password_hash, $data['phone'], $data['job'], $data['birth_date']);
 
     if ($stmt->execute()) {
         $stmt->close();
