@@ -5,8 +5,10 @@ require_once '../../../config/database.php';
 ini_set('display_errors', 1);
 error_reporting(E_ALL);
 
+session_start();
+
 /**
- * Authentifie un utilisateur et renvoie un jeton ou une session.
+ * Authentifie un utilisateur et initialise une session.
  */
 function authenticateUser($mail, $password) {
     $conn = connectDb();
@@ -19,26 +21,24 @@ function authenticateUser($mail, $password) {
     if ($result->num_rows > 0) {
         $user = $result->fetch_assoc();
         if (password_verify($password, $user['password'])) {
-            // Générer un jeton ou créer une session
-            $response = [
+            $_SESSION['user'] = [
+                'mail' => $user['mail'],
+                'firstname' => $user['firstname'],
+                'lastname' => $user['lastname'],
+            ];
+            session_write_close();
+            return [
                 'status' => 'success',
                 'message' => 'Authentication successful',
-                'user' => [
-                    'mail' => $user['mail'],
-                    'firstname' => $user['firstname'],
-                    'lastname' => $user['lastname'],
-                ]
+                'user' => $_SESSION['user']
             ];
-            return $response;
         } else {
-            // Mot de passe incorrect
             return [
                 'status' => 'error',
                 'message' => 'Invalid email or password.'
             ];
         }
     } else {
-        // Utilisateur non trouvé
         return [
             'status' => 'error',
             'message' => 'Invalid email or password.'
@@ -46,7 +46,6 @@ function authenticateUser($mail, $password) {
     }
 }
 
-// Traiter la requête POST
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $data = json_decode(file_get_contents('php://input'), true);
     $email = $data['mail'] ?? '';
@@ -59,4 +58,3 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         echo json_encode($result);
     }
 }
-?>
