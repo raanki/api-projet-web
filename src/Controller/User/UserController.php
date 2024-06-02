@@ -70,8 +70,9 @@ function updateUser($data) {
     $sql = "UPDATE users SET student_number = ?, firstname = ?, lastname = ?, address = ?, password = ?, phone = ?, job = ?, birth_date = ? WHERE mail = ?";
 
     $stmt = $conn->prepare($sql);
+    $password_hash = password_hash($data['password'], PASSWORD_DEFAULT, []);
 
-    $stmt->bind_param("issssssss", $data['student_number'], $data['firstname'], $data['lastname'], $data['address'], $data['password'], $data['phone'], $data['job'], $data['birth_date'], $data['mail']);
+    $stmt->bind_param("issssssss", $data['student_number'], $data['firstname'], $data['lastname'], $data['address'], $password_hash, $data['phone'], $data['job'], $data['birth_date'], $data['mail']);
 
     if ($stmt->execute()) {
         $stmt->close();
