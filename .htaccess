@@ -4,6 +4,7 @@ RewriteRule ^api/equipment$ src/Controller/Equipment/EquipmentController.php [NC
 RewriteRule ^cors$ config/cors.php [NC,L]
 RewriteRule ^api/loan$ src/Controller/Loan/LoanController.php [NC,L]
 RewriteRule ^api/user/$ src/Controller/User/UserController.php [QSA,NC,L]
+RewriteRule ^api/search$ src/Controller/Search/SearchController.php [QSA,NC,L]
 RewriteRule ^api/login$ src/Controller/Login/LoginController.php [NC,L]
 RewriteRule ^api/register$ src/Controller/Register/RegisterController.php [NC,L]
 RewriteRule ^api/dashboard$ src/Controller/Dashboard/DashboardController.php [NC,L]
