@@ -28,10 +28,15 @@ function getEquipments($filter = '', $order = 'ASC') {
 
     if ($result && $result->num_rows > 0) {
         while ($row = $result->fetch_assoc()) {
+            $row["availability"] = $row["availability"] == "1" ? "Yes" : "No";
+            $row["name"] = ucfirst($row["name"]);
+            $row["description"] = ucfirst($row["description"]);
             $equipments[] = $row;
         }
         $result->free();
     }
+
+
 
     $conn->close();
     return $equipments;
@@ -48,6 +53,7 @@ function createEquipment($data) {
 
     // Vérifier si 'availability' est définie, sinon la définir à 'false'
     $availability = isset($data['availability']) ? $data['availability'] : false;
+    $availability = $availability ? 1 : 0;
 
     $stmt->bind_param("sssdss", $data['name'], $data['description'], $data['purchaseDate'], $data['purchasePrice'], $data['supplier'], $availability);
 
