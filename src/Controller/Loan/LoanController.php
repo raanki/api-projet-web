@@ -29,7 +29,6 @@ function getLoans($filter = '', $order = 'ASC') {
     if ($result && $result->num_rows > 0) {
         while ($row = $result->fetch_assoc()) {
             $row["commentary"] = ucfirst($row["commentary"]);
-            $row["material_id"] = $row["material_id"] == "1" ? "Yes" : "No";
             $loans[] = $row;
         }
         $result->free();
@@ -47,6 +46,10 @@ function createLoan($data) {
     $sql = "INSERT INTO to_loan (mail, loan_id, start_date, expect_end_date, actual_end_date, commentary, created_at, material_id) VALUES (?, ?, ?, ?, ?, ?, ?, ?)";
 
     $stmt = $conn->prepare($sql);
+
+    if (empty($data['actual_end_date'])) {
+        $data['actual_end_date'] = null;
+    }
     $stmt->bind_param("sisssssi", $data['mail'], $data['loan_id'], $data['start_date'], $data['expect_end_date'], $data['actual_end_date'], $data['commentary'], $data['created_at'], $data['material_id']);
 
     if ($stmt->execute()) {
